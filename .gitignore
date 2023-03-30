@@ -127,3 +127,10 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Large data files
+datasets/AWID/AWID-CLS-R-Trn.csv
+datasets/AWID/AWID-CLS-R-Tst.csv
+datasets/KDD/KDDTest+.txt
+datasets/KDD/KDDTrain+_20Percent.txt
+datasets/KDD/KDDTrain+.txt
