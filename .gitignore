@@ -134,3 +134,9 @@ datasets/AWID/AWID-CLS-R-Tst.csv
 datasets/KDD/KDDTest+.txt
 datasets/KDD/KDDTrain+_20Percent.txt
 datasets/KDD/KDDTrain+.txt
+
+# wandb
+wandb/
+
+# logs
+logs/

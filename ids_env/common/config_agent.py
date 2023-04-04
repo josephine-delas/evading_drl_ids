@@ -7,7 +7,7 @@ import torch.nn as nn
 
 from stable_baselines3 import PPO, DQN
 
-from ids_env.common.callbacks import CustomWandbCallback
+from ids_env.common.callback import CustomWandbCallback
 
 class Agent(nn.Module):
     '''
