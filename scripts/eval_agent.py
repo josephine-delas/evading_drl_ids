@@ -61,7 +61,7 @@ if __name__=='__main__':
 
     ####----Agent----####
 
-    agent = Agent(testing_env, obs_shape, hidden_layers=hidden_layers, nb_units=nb_units, model=model, device=device, seed=seed)
+    agent = Agent(testing_env, obs_shape, hidden_layers=hidden_layers, nb_units=nb_units, model=model, device=device, seed=seed, wandb_on=False)
 
     agent_name='best_model_f1_bin.zip'
     agent.load(os.path.join(load_dir, agent_name))
