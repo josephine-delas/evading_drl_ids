@@ -34,7 +34,7 @@ class Agent(nn.Module):
         self.obs_shape = obs_shape
         self.model_name=model
         self.device = device
-        self.wandb = wandb_on
+        self.wandb_on = wandb_on
 
         if nb_units == 'custom':
             policy_kwargs = dict(net_arch=[64*(2**(i)) for i in range(hidden_layers)])
