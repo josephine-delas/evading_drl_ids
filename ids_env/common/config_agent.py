@@ -91,7 +91,7 @@ class Agent(nn.Module):
         '''
         episode_length = self.model.env.get_attr('episode_length')[0]
         
-        self.model.learn(total_timesteps=episode_length*num_epoch, reset_num_timesteps=False, progress_bar=True)
+        self.model.learn(total_timesteps=episode_length*num_epoch, reset_num_timesteps=False)
 
     def forward(self, obs, deterministic=True, grad=False):
         obs = self._prepare_obs(obs)
