@@ -13,13 +13,6 @@ Activate the local environment and install the requirements:
 ```sh
 pip install -r requirements.txt
 ```
-#### W&B
-
-Log in to wandb and paste your API key when prompted:
-
-```sh
-wandb login
-```
 
 ## Tests
 
@@ -38,13 +31,13 @@ The `./scripts/` directory contains scripts for training and evaluating IDS agen
 
 #### Training script
 
-This script trains an IDS agent with the wanted hyperparameters, tracking training metrics with wandb is `-w=True` and saving best and last models into the `./logs/train/`directory.
+This script trains an IDS agent with the wanted hyperparameters and saves best and last models into the `./logs/train/`directory.
 
 ```sh
 cd scripts/
-python -m train_agent -d <dataset> -m <model> -l <num_layers> -u <num_units> -e <num_epoch> -w <wandb>
+python -m train_agent -d <dataset> -m <model> -l <num_layers> -u <num_units> -e <num_epoch>
 # Example
-python -m train_agent -d KDD -m DQN -l 1 -u 68 -e 10 -w 1
+python -m train_agent -d KDD -m DQN -l 1 -u 68 -e 10
 ```
 
 #### Evaluation script

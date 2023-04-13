@@ -7,14 +7,12 @@ import torch.nn as nn
 
 from stable_baselines3 import PPO, DQN
 
-from ids_env.common.callback import CustomWandbCallback
-
 class Agent(nn.Module):
     '''
     SB3 Agent for the IDS environment, with helper functions to help implement adversarial examples
     '''
 
-    def __init__(self, env, obs_shape, hidden_layers=1, nb_units = 64, model: str = 'DQN', device: str = 'cpu', seed: int = 0, wandb_on=True):
+    def __init__(self, env, obs_shape, hidden_layers=1, nb_units = 64, model: str = 'DQN', device: str = 'cpu', seed: int = 0):
         '''
         Params:
         -------
@@ -34,7 +32,6 @@ class Agent(nn.Module):
         self.obs_shape = obs_shape
         self.model_name=model
         self.device = device
-        self.wandb_on = wandb_on
 
         if nb_units == 'custom':
             policy_kwargs = dict(net_arch=[64*(2**(i)) for i in range(hidden_layers)])
@@ -94,11 +91,7 @@ class Agent(nn.Module):
         '''
         episode_length = self.model.env.get_attr('episode_length')[0]
         
-        if self.wandb_on:
-            customwandbcallback = CustomWandbCallback(training_env=self.model.env, eval_env=eval_env, eval_freq=max(episode_length // n_envs, 1), save_dir=save_dir)
-            self.model.learn(total_timesteps=episode_length*num_epoch, callback=customwandbcallback, reset_num_timesteps=False, progress_bar=True)
-        else:
-            self.model.learn(total_timesteps=episode_length*num_epoch, reset_num_timesteps=False, progress_bar=True)
+        self.model.learn(total_timesteps=episode_length*num_epoch, reset_num_timesteps=False, progress_bar=True)
 
     def forward(self, obs, deterministic=True, grad=False):
         obs = self._prepare_obs(obs)
