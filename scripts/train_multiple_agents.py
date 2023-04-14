@@ -75,7 +75,7 @@ if __name__=='__main__':
        # Creation of the agent
 
         agent = Agent(vectorized_training_env, obs_shape, hidden_layers=hidden_layers, nb_units = nb_units,
-                   model=model, device=device, seed=seed)
+                   model=model, device=device, seed=seed, wandb_on=False)
 
         # Training
 
