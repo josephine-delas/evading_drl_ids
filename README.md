@@ -38,11 +38,11 @@ The `./scripts/` directory contains scripts for training and evaluating IDS agen
 
 #### Training script
 
-This script trains an IDS agent with the wanted hyperparameters, saving best and last models into the `./logs/train/`directory.
+This script trains an IDS agent with the wanted hyperparameters, showing wandb metrics and saving best and last models into the `./logs/train/`directory.
 
 ```sh
 cd scripts/
-python -m train_agent -d <dataset> -m <model> -l <num_layers> -u <num_units> -e <num_epoch> -p <nb_proc>
+python -m train_agent -d <dataset> -m <model> -l <num_layers> -u <num_units> -e <num_epoch> -w <wandb_on> -p <nb_proc>
 # Example
 python -m train_agent -d KDD -m DQN -l 1 -u 68 -e 10 -w 1
 ```
