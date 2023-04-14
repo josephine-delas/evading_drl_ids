@@ -44,7 +44,7 @@ This script trains an IDS agent with the wanted hyperparameters, showing wandb m
 cd scripts/
 python -m train_agent -d <dataset> -m <model> -l <num_layers> -u <num_units> -e <num_epoch> -w <wandb_on> -p <nb_proc>
 # Example
-python -m train_agent -d KDD -m DQN -l 1 -u 68 -e 10 -w 1
+python -m train_agent -d KDD -m DQN -l 1 -u 68 -e 10 -w 1 -p 4
 ```
 
 #### Evaluation script
