@@ -22,6 +22,7 @@ if __name__=='__main__':
     parser.add_argument("-l", "--layers", required=True, default=1, type=int, help="Number of hidden layers in the policy.")
     parser.add_argument("-u", "--units", required=True, default=64, type=int, help="Number of units in each layer of the policy. If -1, then the network is composed with layers of increasing size.")
     parser.add_argument("-e", "--epochs", required=True, default=10, type=int, help="Number of epochs to train the agent.")
+    parser.add_argument("-p", "--nb_proc", default=4, type=int, help="Number of vectorized environments for training")
     args = parser.parse_args()
 
     dataset= args.data
@@ -29,7 +30,8 @@ if __name__=='__main__':
     hidden_layers = args.layers
     nb_units = args.units if args.units>0 else "custom"
     epochs = args.epochs # each epochs contains training_set.size steps
-    
+    nb_proc = args.nb_proc # Number of vectorized environments, to accelerate training
+
     # Workspace config parameters
     device_name = 'cpu' 
     seed = 0
@@ -48,7 +50,6 @@ if __name__=='__main__':
 
     ####----Environment----####
 
-    nb_proc = 4 # Number of vectorized environments, to accelerate training
     training_env = make_training_env(dataset)() # make_training_env returns a callable function, the last '()' is important
     vectorized_training_env = make_multi_proc_training_env(nb_proc=nb_proc, dataset=dataset)
     testing_env = make_testing_env(dataset)() 
