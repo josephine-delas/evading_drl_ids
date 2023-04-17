@@ -27,6 +27,7 @@ if __name__=='__main__':
     parser.add_argument("-e", "--epochs", required=True, default=10, type=int, help="Number of epochs to train the agent.")
     parser.add_argument("-p", "--nb_proc", default=4, type=int, help="Number of vectorized environments for training")
     parser.add_argument("-n", "--nb_agents", default=1, type=int, help="Number of agents trained in the loop")
+    parser.add_argument("-b", "--binary", default=1, type=int, help="Binary classification (1) or multi-class (0)")
     args = parser.parse_args()
 
     dataset= args.data
@@ -36,6 +37,8 @@ if __name__=='__main__':
     epochs = args.epochs # each epochs contains training_set.size steps
     nb_proc = args.nb_proc # Number of vectorized environments, to accelerate training
     nb_agents = args.nb_agents
+    binary = args.binary
+    verbose = False
 
     # Workspace config parameters
     device_name = 'cpu' 
@@ -48,11 +51,12 @@ if __name__=='__main__':
     ####----Device----######
     
     device = config_device(device_name)
+    config_seed(seed)
 
     ####----Evaluation----####
 
-    testing_env = make_testing_env(dataset)() 
-    training_env= make_training_env(dataset)()
+    testing_env = make_testing_env(dataset, binary=binary)() 
+    training_env= make_training_env(dataset, binary=binary)()
     obs_shape = testing_env.reset().shape
 
     test_set=np.array(testing_env.X, dtype='float32')
@@ -60,6 +64,10 @@ if __name__=='__main__':
     dict_attack=dict((testing_env.attack_types[i], i) for i in range(len(testing_env.attack_types)))
     test_labels=testing_env.y.replace(dict_attack)
     train_labels=training_env.y.replace(dict_attack)
+    if binary:
+        test_labels = np.sign(test_labels)
+        train_labels = np.sign(train_labels)
+
 
     ####---Loop----#
     best_fpr=1
@@ -67,13 +75,11 @@ if __name__=='__main__':
     best_f1_score=0
     test_fpr=np.zeros(nb_agents)
     test_fnr=np.zeros(nb_agents)
-    test_f1_avg=np.zeros(nb_agents)
+    test_f1=np.zeros(nb_agents)
     for i in range(nb_agents):
         print('Started training of agent {} / {}'.format(i, nb_agents))
-        seed=i
-        config_seed(seed)
 
-        vectorized_training_env = make_multi_proc_training_env(nb_proc=nb_proc, dataset=dataset)
+        vectorized_training_env = make_multi_proc_training_env(nb_proc=nb_proc, dataset=dataset, binary=binary)
 
        # Creation of the agent
 
@@ -84,17 +90,18 @@ if __name__=='__main__':
 
         agent.learn(testing_env, n_envs=nb_proc, save_dir=output_dir, num_epoch=epochs)
 
-        # Evaluation on the training set (to select the best agent)
+        if model=='DQN':
+            agent.model.policy.set_training_mode(False) # Switch to testing mode
 
-        train_actions = agent.model.predict(train_set)[0]
-        train_fpr, train_fnr = calcul_rates(train_labels, train_actions)
-        train_f1_avg = f1_score(train_labels, train_actions, average='weighted')
+        
+        # Evaluation on the testing set 
 
-        # Evaluation on the testing set (to track the test metrics)
-
-        test_actions = agent.model.predict(test_set)[0]
+        test_actions = agent.model.predict(test_set, deterministic=True)[0]
         test_fpr[i], test_fnr[i] = calcul_rates(test_labels, test_actions)
-        test_f1_avg[i] = f1_score(test_labels, test_actions, average='weighted')
+        if binary:
+            test_f1[i] = f1_score(test_labels, test_actions)
+        else:
+            test_f1[i] = f1_score(test_labels, test_actions, average='weighted')
 
         print('Completed training of agent {} / {}'.format(i, nb_agents))
 
@@ -105,5 +112,5 @@ if __name__=='__main__':
     agent.save(output_dir + '/last_model.zip')
     test_fpr.tofile(output_dir+'/test_fpr.np')
     test_fnr.tofile(output_dir+'/test_fnr.np')
-    test_f1_avg.tofile(output_dir+'/test_f1_avg.np')
+    test_f1.tofile(output_dir+'/test_f1_avg.np')
 
