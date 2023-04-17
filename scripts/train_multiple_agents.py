@@ -65,8 +65,11 @@ if __name__=='__main__':
     best_fpr=1
     best_fnr=1
     best_f1_score=0
+    test_fpr=np.zeros(nb_agents)
+    test_fnr=np.zeros(nb_agents)
+    test_f1_avg=np.zeros(nb_agents)
     for i in range(nb_agents):
-        print('Start '+str(i))
+        print('Started training of agent {} / {}'.format(i, nb_agents))
         seed=i
         config_seed(seed)
 
@@ -90,10 +93,17 @@ if __name__=='__main__':
         # Evaluation on the testing set (to track the test metrics)
 
         test_actions = agent.model.predict(test_set)[0]
-        test_fpr, test_fnr = calcul_rates(test_labels, test_actions)
-        test_f1_avg = f1_score(test_labels, test_actions, average='weighted')
+        test_fpr[i], test_fnr[i] = calcul_rates(test_labels, test_actions)
+        test_f1_avg[i] = f1_score(test_labels, test_actions, average='weighted')
 
-        # TODO saving the metrics in a tensor
+        print('Completed training of agent {} / {}'.format(i, nb_agents))
 
-        print('Ok '+str(i))
+    # Saving model and evaluation metrics
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    
+    agent.save(output_dir + '/last_model.zip')
+    test_fpr.tofile(output_dir+'/test_fpr.np')
+    test_fnr.tofile(output_dir+'/test_fnr.np')
+    test_f1_avg.tofile(output_dir+'/test_f1_avg.np')
 
