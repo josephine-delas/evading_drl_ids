@@ -35,9 +35,9 @@ This script trains an IDS agent with the wanted hyperparameters and saves best a
 
 ```sh
 cd scripts/
-python -m train_agent -d <dataset> -m <model> -l <num_layers> -u <num_units> -e <num_epoch> -p <nb_proc>
+python -m train_agent -d <dataset> -m <model> -l <num_layers> -u <num_units> -e <num_epoch> -p <nb_proc> -b <binary>
 # Example
-python -m train_agent -d KDD -m DQN -l 1 -u 68 -e 10 -p 4
+python -m train_agent -d KDD -m DQN -l 1 -u 68 -e 10 -p 4 -b 1
 ```
 
 #### Evaluation script
@@ -46,5 +46,5 @@ This script loads a pretrained agent from the log directory, raising an error if
 
 ```sh
 cd scripts/
-python -m eval_agent -d <dataset> -m <model> -l <num_layers> -u <num_units> 
+python -m eval_agent -d <dataset> -m <model> -l <num_layers> -u <num_units> -b <binary>
 ```
