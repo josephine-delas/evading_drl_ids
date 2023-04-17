@@ -26,6 +26,7 @@ if __name__=='__main__':
     parser.add_argument("-e", "--epochs", required=True, default=10, type=int, help="Number of epochs to train the agent.")
     parser.add_argument("-w", "--wandb", default=1, type=int, help="Activate W&B tracking during training (1) or not (0)")
     parser.add_argument("-p", "--nb_proc", default=4, type=int, help="Number of vectorized environments for training")
+    parser.add_argument("-b", "--binary", default=1, type=int, help="Binary classification (True) or multi-class (False)")
     args = parser.parse_args()
 
     dataset= args.data
@@ -35,6 +36,7 @@ if __name__=='__main__':
     epochs = args.epochs # each epochs contains training_set.size steps
     wandb_on = args.wandb
     nb_proc = args.nb_proc # Number of vectorized environments, to accelerate training
+    binary = args.binary
     
     # Workspace config parameters
     device_name = 'cpu' 
@@ -70,9 +72,9 @@ if __name__=='__main__':
 
     ####----Environment----####
     
-    training_env = make_training_env(dataset)() # make_training_env returns a callable function, the last '()' is important
-    vectorized_training_env = make_multi_proc_training_env(nb_proc=nb_proc, dataset=dataset)
-    testing_env = make_testing_env(dataset)() 
+    training_env = make_training_env(dataset, binary=binary)() # make_training_env returns a callable function, the last '()' is important
+    vectorized_training_env = make_multi_proc_training_env(nb_proc=nb_proc, dataset=dataset, binary=binary)
+    testing_env = make_testing_env(dataset, binary=binary)() 
     obs_shape = testing_env.reset().shape
 
     ####----Agent----####
@@ -90,6 +92,9 @@ if __name__=='__main__':
     ####----Saving----####
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
-    agent.save(output_dir + '/last_model.zip')
+    if binary :
+        agent.save(output_dir + '/last_model_binary.zip')
+    else:
+        agent.save(output_dir + '/last_model.zip')
 
     print('Done.')

@@ -12,7 +12,7 @@ class CustomIDSEnv(gym.Env):
   Custom IDS Environment that follows gym interface.
   """
 
-  def __init__(self, train_test : str, data_path : str, data='KDD'):
+  def __init__(self, train_test : str, data_path : str, data='KDD', binary=False):
     '''
     Initializing the environment with the wanted dataset
 
@@ -24,11 +24,14 @@ class CustomIDSEnv(gym.Env):
       The path where the training or testing data can be found.
     data: str
       'KDD' or 'AWID', chosen dataset to work with
+    binary: bool
+      Classification mode : if binary=True, then two-class, else multi-class
     
     '''
     super(CustomIDSEnv, self).__init__()
 
     self.train_test = train_test
+    self.binary=binary
 
     # Loading training or testing data
     self.df = pd.read_parquet(data_path)
@@ -102,6 +105,14 @@ class CustomIDSEnv(gym.Env):
     n_actions = len(self.attack_types)
     self.action_space = gym.spaces.Discrete(n_actions)
 
+    # Binary classification
+    if self.binary==True:
+      n_actions=2
+      self.action_space=gym.spaces.Discrete(n_actions)
+      self.binary_map = {key:'Attack' for key in self.attack_types}
+      self.binary_map['normal']='Normal'
+      self.y_bin=self.y.replace(self.binary_map)
+
     # Observation space
     self.observation_space = gym.spaces.Box(low=np.array(self.X.min(axis=0)), high=np.array(self.X.max(axis=0))) #shape is inferred from low and high
 
@@ -116,10 +127,10 @@ class CustomIDSEnv(gym.Env):
     if self.train_test == 'train': # adversarial sampling : for now, choose one class at random for each state
       category = np.random.randint(len(self.attack_types))
       idx = np.random.choice(self.indexes[category])
-      self.label = category
+      self.label =  np.sign(category) if self.binary else category
     else :
       idx = self.num_step
-      self.label = self.attack_types.index(self.y.iloc[idx])
+      self.label = np.sign(self.attack_types.index(self.y.iloc[idx])) if self.binary else self.attack_types.index(self.y.iloc[idx])
 
     # Get state from index
     self.state = np.array(self.X.iloc[idx], dtype='float32')
@@ -148,10 +159,10 @@ class CustomIDSEnv(gym.Env):
     if self.train_test == 'train': # adversarial sampling
       category = np.random.randint(len(self.attack_types))    # TODO add a sampling function (adversarial selector agent, etc.)
       idx = np.random.choice(self.indexes[category])
-      self.label = category
+      self.label = np.sign(category) if self.binary else category
     else :
       idx = self.num_step
-      self.label = self.attack_types.index(self.y.iloc[idx])
+      self.label = np.sign(self.attack_types.index(self.y.iloc[idx])) if self.binary else self.attack_types.index(self.y.iloc[idx])
     self.state = np.array(self.X.iloc[idx], dtype='float32')
 
     # info ?

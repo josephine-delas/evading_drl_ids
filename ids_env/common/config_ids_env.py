@@ -17,10 +17,12 @@ kdd_test_path = "../datasets/KDD/formated_KDD_test.parquet"
 
 
 
-def make_training_env(dataset: str = "KDD") -> Callable:
+def make_training_env(dataset: str = "KDD", binary=False) -> Callable:
     '''
     Calls the CustomIDSEnv class to make a training environment
      - dataset is either "AWID" or "KDD", depending on the wanted dataset
+     - binary:bin
+        If True, binary classification, else multi-class
     '''
     def _init():
         if dataset == "AWID" : 
@@ -30,15 +32,17 @@ def make_training_env(dataset: str = "KDD") -> Callable:
         else : 
             raise ValueError("Unknown Dataset")
 
-        return CustomIDSEnv('train', train_path)
+        return CustomIDSEnv('train', train_path,data=dataset, binary=binary)
     return _init
 
 
-def make_testing_env(dataset: str = "KDD") -> Callable:
+def make_testing_env(dataset: str = "KDD", binary=False) -> Callable:
     '''
     Calls the CustomIDSEnv class to make a testing environment
-    -dataset : str
+    -dataset: str
         Either "AWID" or "KDD", depending on the wanted dataset
+    - binary: bin
+        If True, binary classification, else multi-class
     '''
     def _init():
         if dataset == "AWID" : 
@@ -48,13 +52,15 @@ def make_testing_env(dataset: str = "KDD") -> Callable:
         else : 
             raise ValueError("Unknown Dataset")
 
-        return Monitor(CustomIDSEnv('test', test_path))
+        return Monitor(CustomIDSEnv('test', test_path, data=dataset, binary=binary))
     return _init
 
-def make_multi_proc_training_env(nb_proc : int, dataset='KDD'):
+def make_multi_proc_training_env(nb_proc : int, dataset='KDD', binary=False):
     '''
     Vectorizing environement for multi-process training with stable-baselines3
     -nb_proc : int 
         number of wanted subprocesses
+    - binary: bin
+        If True, binary classification, else multi-class
     '''
-    return SubprocVecEnv([make_training_env(dataset=dataset) for _ in range(nb_proc)])
+    return SubprocVecEnv([make_training_env(dataset=dataset, binary=binary) for _ in range(nb_proc)])

@@ -27,6 +27,7 @@ if __name__=='__main__':
     parser.add_argument("-e", "--epochs", required=True, default=10, type=int, help="Number of epochs to train the agent.")
     parser.add_argument("-p", "--nb_proc", default=4, type=int, help="Number of vectorized environments for training")
     parser.add_argument("-n", "--nb_agents", default=1, type=int, help="Number of agents trained in the loop")
+    parser.add_argument("-b", "--binary", default=1, type=int, help="Binary classification (1) or multi-class (0)")
     args = parser.parse_args()
 
     dataset= args.data
@@ -36,6 +37,7 @@ if __name__=='__main__':
     epochs = args.epochs # each epochs contains training_set.size steps
     nb_proc = args.nb_proc # Number of vectorized environments, to accelerate training
     nb_agents = args.nb_agents
+    binary = args.binary
 
     # Workspace config parameters
     device_name = 'cpu' 
@@ -48,11 +50,12 @@ if __name__=='__main__':
     ####----Device----######
     
     device = config_device(device_name)
+    config_seed(seed)
 
     ####----Evaluation----####
 
-    testing_env = make_testing_env(dataset)() 
-    training_env= make_training_env(dataset)()
+    testing_env = make_testing_env(dataset, binary=binary)() 
+    training_env= make_training_env(dataset, binary=binary)()
     obs_shape = testing_env.reset().shape
 
     test_set=np.array(testing_env.X, dtype='float32')
@@ -60,17 +63,18 @@ if __name__=='__main__':
     dict_attack=dict((testing_env.attack_types[i], i) for i in range(len(testing_env.attack_types)))
     test_labels=testing_env.y.replace(dict_attack)
     train_labels=training_env.y.replace(dict_attack)
+    if binary:
+        test_labels = np.sign(test_labels)
+        train_labels = np.sign(train_labels)
+
 
     ####---Loop----#
     best_fpr=1
     best_fnr=1
     best_f1_score=0
     for i in range(nb_agents):
-        print('Start '+str(i))
-        seed=i
-        config_seed(seed)
 
-        vectorized_training_env = make_multi_proc_training_env(nb_proc=nb_proc, dataset=dataset)
+        vectorized_training_env = make_multi_proc_training_env(nb_proc=nb_proc, dataset=dataset, binary=binary)
 
        # Creation of the agent
 
@@ -81,19 +85,33 @@ if __name__=='__main__':
 
         agent.learn(testing_env, n_envs=nb_proc, save_dir=output_dir, num_epoch=epochs)
 
+        if model=='DQN':
+            agent.model.policy.set_training_mode(False) # Switch to testing mode
+        
         # Evaluation on the training set (to select the best agent)
-
-        train_actions = agent.model.predict(train_set)[0]
+        print('Training metrics:')
+        train_actions = agent.model.predict(train_set, deterministic=True)[0]
         train_fpr, train_fnr = calcul_rates(train_labels, train_actions)
         train_f1_avg = f1_score(train_labels, train_actions, average='weighted')
-
+        if binary:
+            print_stats(['Normal', 'Attack'], train_labels, train_actions)
+        else:
+            print_stats(testing_env.attack_types, train_labels, train_actions)
+        print('FPR: ' + str(train_fpr) + ', FNR: ' + str(train_fnr) + ', F1_avg: ' +str(train_f1_avg))
+        print('\nTesting metrics: ')
+        
         # Evaluation on the testing set (to track the test metrics)
-
-        train_actions = agent.model.predict(train_set)[0]
-        train_fpr, train_fnr = calcul_rates(train_labels, train_actions)
-        train_f1_avg = f1_score(train_labels, train_actions, average='weighted')
+        test_actions = agent.model.predict(test_set, deterministic=True)[0]
+        test_fpr, test_fnr = calcul_rates(test_labels, test_actions)
+        test_f1_avg = f1_score(test_labels, test_actions, average='weighted')
+        if binary:
+            test_f1 = f1_score(test_labels, test_actions) # Binary f1 score 
+            print_stats(['Normal', 'Attack'], test_labels, test_actions)
+        else:
+            print_stats(testing_env.attack_types, test_labels, test_actions)
+        print('FPR: ' + str(test_fpr) + ', FNR: ' + str(test_fnr) + 'F1_avg: ' +str(test_f1_avg))
+        
 
         # TODO saving the metrics in a tensor
 
-        print('Ok '+str(i))
 
