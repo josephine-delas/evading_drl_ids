@@ -89,9 +89,9 @@ if __name__=='__main__':
 
         # Evaluation on the testing set (to track the test metrics)
 
-        train_actions = agent.model.predict(train_set)[0]
-        train_fpr, train_fnr = calcul_rates(train_labels, train_actions)
-        train_f1_avg = f1_score(train_labels, train_actions, average='weighted')
+        test_actions = agent.model.predict(test_set)[0]
+        test_fpr, test_fnr = calcul_rates(test_labels, test_actions)
+        test_f1_avg = f1_score(test_labels, test_actions, average='weighted')
 
         # TODO saving the metrics in a tensor
 
