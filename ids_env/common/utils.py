@@ -35,13 +35,13 @@ def print_stats(attack_types, y_true, y_pred):
     estimated_correct_labels = np.zeros(len(attack_types),dtype=int) # number of correctly estimated items in each category
 
 
-    types,counts = np.unique(y_pred,return_counts=True)
+    types,counts = np.unique(y_true,return_counts=True)
     for i in range(len(types)):
         true_labels[types[i]] += counts[i]
 
-    for i,a in enumerate(y_true):
+    for i,a in enumerate(y_pred):
         estimated_labels[a] +=1              
-        if a == y_pred[i]:
+        if a == y_true[i]:
             total_reward += 1
             estimated_correct_labels[a] += 1
 
@@ -66,7 +66,7 @@ def calcul_rates(y_true, y_pred):
   TP = conf_mat[0,0]
 
   FPR = FP/(FP+TN) # Sur toutes les attaques combien sont catégorisées comme normales
-  FNR = FN/(FN+TP) # Sur touts les normaux combien sont catégorisés comme attaques
+  FNR = FN/(FN+TP) # Sur tous les normaux combien sont catégorisés comme attaques
 
   return(FPR, FNR)
 
