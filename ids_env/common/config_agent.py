@@ -7,6 +7,8 @@ import torch.nn as nn
 
 from stable_baselines3 import PPO, DQN
 
+from ids_env.common.utils import PPO_Model
+
 class Agent(nn.Module):
     '''
     SB3 Agent for the IDS environment, with helper functions to help implement adversarial examples
@@ -121,3 +123,15 @@ class Agent(nn.Module):
             return action_distribution
         else:
             return action_distribution.detach().cpu().numpy()
+    
+    def get_pytorch_model(self):
+        '''
+        Returns nn.Module instance computing the action probabilities
+        '''
+        if self.model_name=='DQN':
+            pytorch_model = nn.Sequential(self.model.q_net, nn.Softmax())
+        elif self.model_name=='PPO':
+            pytorch_model = PPO_Model(self.model.policy.mlp_extractor, self.model.policy.action_net)
+        else:
+            raise(ValueError("Model unknown"))
+        return pytorch_model

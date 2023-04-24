@@ -4,8 +4,23 @@
 
 import pandas as pd
 import numpy as np
+import torch.nn as nn
 from sklearn import metrics
 import matplotlib.pyplot as plt
+
+class PPO_Model(nn.Module):
+    '''
+    To extract pytorch model from sb3's PPO implementation
+    '''
+    def __init__(self, extractor, action_net):
+        super().__init__()
+        self.extractor = extractor
+        self.action_net = action_net
+        self.softmax = nn.Softmax()
+
+    def forward(self, observation):
+        action_hidden, value_hidden = self.extractor(observation)
+        return self.softmax(self.action_net(action_hidden))
 
 
 def print_stats(attack_types, y_true, y_pred):

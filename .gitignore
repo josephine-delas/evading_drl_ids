@@ -139,3 +139,6 @@ datasets/UNSW-NB15/UNSW_NB15_training-set.csv
 
 # logs
 logs/
+
+# wandb
+wandb
