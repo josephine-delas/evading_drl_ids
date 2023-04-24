@@ -137,3 +137,6 @@ datasets/KDD/KDDTrain+.txt
 
 # logs
 logs/
+
+# wandb
+wandb
