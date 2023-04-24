@@ -86,6 +86,9 @@ if __name__=='__main__':
     test_fpr=np.zeros(nb_agents)
     test_fnr=np.zeros(nb_agents)
     test_f1=np.zeros(nb_agents)
+    adv_fpr=np.zeros(nb_agents)
+    adv_fnr=np.zeros(nb_agents)
+    adv_f1=np.zeros(nb_agents)
 
     for i in range(nb_agents):
         print('Started training of agent {} / {}'.format(i+1, nb_agents))
@@ -139,6 +142,11 @@ if __name__=='__main__':
                                          )
             adversarial_examples = fgm.generate(x=test_set, y=np.hstack((np.ones((test_set.shape[0], 1)), np.zeros((test_set.shape[0], nb_class-1)))).astype('float32'))# we assume the normal class is the first column
             adversarial_actions = agent.model.predict(adversarial_examples, deterministic=True)[0]
+            adv_fpr[i], adv_fnr[i] = calcul_rates(test_labels, adversarial_actions)
+            if binary:
+                adv_f1[i] = f1_score(test_labels, adversarial_actions)
+            else:
+                adv_f1[i] = f1_score(test_labels, adversarial_actions, average='weighted')
             
             # TODO : add other attacks / Save metrics in numpy arrray
             
@@ -157,4 +165,7 @@ if __name__=='__main__':
     test_fpr.tofile(output_dir+'/test_fpr.np')
     test_fnr.tofile(output_dir+'/test_fnr.np')
     test_f1.tofile(output_dir+'/test_f1_avg.np')
+    adv_fpr.tofile(output_dir+'/adv_fpr.np')
+    adv_fnr.tofile(output_dir+'/adv_fnr.np')
+    adv_f1.tofile(output_dir+'/adv_f1_avg.np')
 
