@@ -14,6 +14,8 @@ awid_test_path = "../datasets/AWID/formated_AWID_test.parquet"
 kdd_train_path = "../datasets/KDD/formated_KDD_train.parquet"
 kdd_test_path = "../datasets/KDD/formated_KDD_test.parquet"
 
+unswnb15_train_path = "../datasets/UNSW-NB15/formated_UNSWNB15_train.parquet"
+unswnb15_test_path = "../datasets/UNSW-NB15/formated_UNSWNB15_test.parquet"
 
 
 
@@ -29,6 +31,8 @@ def make_training_env(dataset: str = "KDD", binary=False) -> Callable:
             train_path = awid_train_path
         elif dataset == "KDD" : 
             train_path = kdd_train_path
+        elif dataset == "UNSW-NB15" :
+            train_path = unswnb15_train_path
         else : 
             raise ValueError("Unknown Dataset")
 
@@ -49,6 +53,8 @@ def make_testing_env(dataset: str = "KDD", binary=False) -> Callable:
             test_path = awid_test_path
         elif dataset == "KDD" : 
             test_path = kdd_test_path
+        elif dataset == "UNSW-NB15" : 
+            test_path = unswnb15_test_path
         else : 
             raise ValueError("Unknown Dataset")
 

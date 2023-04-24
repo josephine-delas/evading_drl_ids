@@ -6,7 +6,7 @@ import sys
 path_root = Path(__file__).parents[1]
 sys.path.append(str(path_root))
 
-from preprocessing import FormatKDD, FormatAWID
+from preprocessing import FormatKDD, FormatAWID, FormatUNSWNB15
 
 if __name__ == '__main__':
 
@@ -27,6 +27,8 @@ if __name__ == '__main__':
     raw_test_path_KDD = '../datasets/KDD/KDDTest+.txt'
     raw_test_path_AWID = '../datasets/AWID/AWID-CLS-R-Tst.csv'
     raw_train_path_AWID = '../datasets/AWID/AWID-CLS-R-Trn.csv'
+    raw_train_path_UNSWNB15 = '../datasets/UNSW-NB15/UNSW_NB15_training-set.csv'
+    raw_test_path_UNSWNB15 = '../datasets/UNSW-NB15/UNSW_NB15_testing-set.csv'
 
     if save : 
         if dataset=='KDD':
@@ -43,6 +45,13 @@ if __name__ == '__main__':
             means.to_csv('../datasets/AWID/means_AWID.csv', sep=',', index=True)
             stds.to_csv('../datasets/AWID/stds_AWID.csv', sep=',', index=True)
 
+        elif dataset=='UNSW-NB15':
+            formated_train_UNSWNB15, formated_test_UNSWNB15, means, stds = FormatUNSWNB15(raw_train_path=raw_train_path_UNSWNB15, raw_test_path=raw_test_path_UNSWNB15, normalization = 'standard')
+            formated_train_UNSWNB15.to_parquet('../datasets/UNSW-NB15/formated_UNSWNB15_train.parquet',index=False)
+            formated_test_UNSWNB15.to_parquet('../datasets/UNSW-NB15/formated_UNSWNB15_test.parquet',index=False)
+            means.to_csv('../datasets/UNSW-NB15/means_UNSWNB15.csv', sep=',', index=True)
+            stds.to_csv('../datasets/UNSW-NB15/stds_UNSWNB15.csv', sep=',', index=True)
+
         else:
             raise ValueError("Unknown dataset. Received {}, should be 'KDD' or 'AWID'".format(dataset))
     
@@ -54,6 +63,10 @@ if __name__ == '__main__':
     elif dataset=='AWID':
         train_df = pd.read_parquet('../datasets/AWID/formated_AWID_train.parquet')
         test_df = pd.read_parquet('../datasets/AWID/formated_AWID_test.parquet')
+
+    elif dataset=='UNSW-NB15':
+        train_df = pd.read_parquet('../datasets/UNSW-NB15/formated_UNSWNB15_train.parquet')
+        test_df = pd.read_parquet('../datasets/UNSW-NB15/formated_UNSWNB15_test.parquet')    
     
     if verbose:
 

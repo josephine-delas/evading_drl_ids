@@ -134,6 +134,8 @@ datasets/AWID/AWID-CLS-R-Tst.csv
 datasets/KDD/KDDTest+.txt
 datasets/KDD/KDDTrain+_20Percent.txt
 datasets/KDD/KDDTrain+.txt
+datasets/UNSW-NB15/UNSW_NB15_testing-set.csv
+datasets/UNSW-NB15/UNSW_NB15_training-set.csv
 
 # logs
 logs/
