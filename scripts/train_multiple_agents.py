@@ -6,20 +6,17 @@ import argparse
 import numpy as np
 from sklearn.metrics import f1_score
 import torch.nn as nn
-import torch
+import wandb
 
 from pathlib import Path
 import sys
 path_root = Path(__file__).parents[1]
 sys.path.append(str(path_root))
 
-from art.attacks.evasion import FastGradientMethod
-from art.estimators.classification import PyTorchClassifier
 
 from ids_env.common.config_workspace import config_device, config_seed
 from ids_env.common.config_ids_env import make_training_env, make_multi_proc_training_env, make_testing_env
 from ids_env.common.config_agent import Agent
-from ids_env.common.utils import calcul_rates, print_stats
 
 if __name__=='__main__':
 
@@ -60,6 +57,19 @@ if __name__=='__main__':
     device = config_device(device_name)
     config_seed(seed)
 
+    ####----W&B----####
+    wandb.init(
+        project="evading_drl_ids", # do not change
+        tags = [dataset, model],
+        name=dataset + '_' + model + '_' + str(hidden_layers) + '_' + str(nb_units), # name of the run
+        job_type='train', 
+        config={"dataset": dataset, # more information about the run (useful for grouping/filtering)
+                "model": model,
+                "nb_hidden_layers":hidden_layers,
+                "nb_units":nb_units,
+                "epochs": epochs}
+    )
+
     ####----Evaluation Variables----####
 
     testing_env = make_testing_env(dataset, binary=binary)() 
@@ -97,14 +107,25 @@ if __name__=='__main__':
 
        # Creation of the agent
 
-        agent = Agent(vectorized_training_env, obs_shape, hidden_layers=hidden_layers, nb_units = nb_units,
+        args_callback = {
+            'test_set':test_set,
+            'train_set':train_set,
+            'dict_attack':dict_attack,
+            'test_labels':test_labels,
+            'train_labels':train_labels,
+            'nb_class':nb_class,
+            'epsilon_range':epsilon_range,
+            'binary':binary
+        }
+
+        agent = Agent(vectorized_training_env, obs_shape, args_callback=args_callback, hidden_layers=hidden_layers, nb_units = nb_units,
                    model=model, device=device, seed=seed)
 
         # Training
-
-        #agent.learn(testing_env, n_envs=nb_proc, save_dir=output_dir, num_epoch=epochs)
-        agent.load(output_dir+'/last_model.zip')
-
+        print('Training...')
+        agent.learn(testing_env, n_envs=nb_proc, save_dir=output_dir, num_epoch=epochs)
+        #agent.load(output_dir+'/last_model.zip')
+        '''
         if model=='DQN':
             agent.model.policy.set_training_mode(False) # Switch to testing mode
 
@@ -156,16 +177,18 @@ if __name__=='__main__':
             #    print_stats(['Normal', 'Attack'], test_labels, adversarial_actions)
             #else:
             #    print_stats(testing_env.attack_types, test_labels, adversarial_actions)
+        '''
 
+        print('Training Done !')
     # Saving model and evaluation metrics
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     
     agent.save(output_dir + '/last_model.zip')
-    test_fpr.tofile(output_dir+'/test_fpr.np')
-    test_fnr.tofile(output_dir+'/test_fnr.np')
-    test_f1.tofile(output_dir+'/test_f1_avg.np')
-    adv_fpr.tofile(output_dir+'/adv_fpr.np')
-    adv_fnr.tofile(output_dir+'/adv_fnr.np')
-    adv_f1.tofile(output_dir+'/adv_f1_avg.np')
+    #test_fpr.tofile(output_dir+'/test_fpr.np')
+    #test_fnr.tofile(output_dir+'/test_fnr.np')
+    #test_f1.tofile(output_dir+'/test_f1_avg.np')
+    #adv_fpr.tofile(output_dir+'/adv_fpr.np')
+    #adv_fnr.tofile(output_dir+'/adv_fnr.np')
+    #adv_f1.tofile(output_dir+'/adv_f1_avg.np')
 

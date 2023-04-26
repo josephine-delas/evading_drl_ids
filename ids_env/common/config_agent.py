@@ -8,13 +8,14 @@ import torch.nn as nn
 from stable_baselines3 import PPO, DQN
 
 from ids_env.common.utils import PPO_Model
+from ids_env.common.callback import CustomWandbCallback
 
 class Agent(nn.Module):
     '''
     SB3 Agent for the IDS environment, with helper functions to help implement adversarial examples
     '''
 
-    def __init__(self, env, obs_shape, hidden_layers=1, nb_units = 64, model: str = 'DQN', device: str = 'cpu', seed: int = 0):
+    def __init__(self, env, obs_shape, args_callback, hidden_layers=1, nb_units = 64, model: str = 'DQN', device: str = 'cpu', seed: int = 0):
         '''
         Params:
         -------
@@ -34,6 +35,7 @@ class Agent(nn.Module):
         self.obs_shape = obs_shape
         self.model_name=model
         self.device = device
+        self.args_callback=args_callback
 
         if nb_units == 'custom':
             policy_kwargs = dict(net_arch=[64*(2**(i)) for i in range(hidden_layers)])
@@ -92,8 +94,8 @@ class Agent(nn.Module):
             path to the evaluation logs (.npz format) 
         '''
         episode_length = self.model.env.get_attr('episode_length')[0]
-        
-        self.model.learn(total_timesteps=episode_length*num_epoch, reset_num_timesteps=False)
+        callback=CustomWandbCallback(eval_freq=max(episode_length // n_envs, 1), test_set=self.args_callback['test_set'], train_set=self.args_callback['train_set'], dict_attack=self.args_callback['dict_attack'], test_labels=self.args_callback['test_labels'], train_labels=self.args_callback['train_labels'], binary=self.args_callback['binary'], nb_class=self.args_callback['nb_class'], epsilon_range=self.args_callback['epsilon_range'])
+        self.model.learn(total_timesteps=episode_length*num_epoch, callback=callback, reset_num_timesteps=False)
 
     def forward(self, obs, deterministic=True, grad=False):
         obs = self._prepare_obs(obs)
