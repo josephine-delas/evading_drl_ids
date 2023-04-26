@@ -86,9 +86,9 @@ if __name__=='__main__':
     test_fpr=np.zeros(nb_agents)
     test_fnr=np.zeros(nb_agents)
     test_f1=np.zeros(nb_agents)
-    adv_fpr=np.zeros(nb_agents, len(epsilon_range))
-    adv_fnr=np.zeros(nb_agents, len(epsilon_range))
-    adv_f1=np.zeros(nb_agents, len(epsilon_range))
+    adv_fpr=np.zeros((nb_agents, len(epsilon_range)))
+    adv_fnr=np.zeros((nb_agents, len(epsilon_range)))
+    adv_f1=np.zeros((nb_agents, len(epsilon_range)))
 
     for i in range(nb_agents):
         print('Started training of agent {} / {}'.format(i+1, nb_agents))
