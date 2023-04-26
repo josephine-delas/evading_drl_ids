@@ -94,7 +94,7 @@ class Agent(nn.Module):
             path to the evaluation logs (.npz format) 
         '''
         episode_length = self.model.env.get_attr('episode_length')[0]
-        callback=CustomWandbCallback(eval_freq=max(episode_length // n_envs, 1), test_set=self.args_callback['test_set'], train_set=self.args_callback['train_set'], dict_attack=self.args_callback['dict_attack'], test_labels=self.args_callback['test_labels'], train_labels=self.args_callback['train_labels'], binary=self.args_callback['binary'], nb_class=self.args_callback['nb_class'], epsilon_range=self.args_callback['epsilon_range'])
+        callback=CustomWandbCallback(eval_freq=max(episode_length // n_envs, 1), test_set=self.args_callback['test_set'], train_set=self.args_callback['train_set'], dict_attack=self.args_callback['dict_attack'], test_labels=self.args_callback['test_labels'], train_labels=self.args_callback['train_labels'], binary=self.args_callback['binary'], nb_class=self.args_callback['nb_class'], epsilon_range=self.args_callback['epsilon_range'], model_name=self.model_name)
         self.model.learn(total_timesteps=episode_length*num_epoch, callback=callback, reset_num_timesteps=False)
 
     def forward(self, obs, deterministic=True, grad=False):

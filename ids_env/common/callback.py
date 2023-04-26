@@ -8,6 +8,7 @@ from art.estimators.classification import PyTorchClassifier
 import torch.nn as nn
 
 from ids_env.common.utils import calcul_rates, print_stats
+from ids_env.common.utils import PPO_Model
 
 
 
@@ -15,7 +16,7 @@ class CustomWandbCallback(EventCallback):
     '''
     Custom callback to log training data in wandb and save best model.
     '''
-    def __init__(self, eval_freq, test_set, train_set, dict_attack, test_labels, train_labels, binary, nb_class, epsilon_range, verbose=0):
+    def __init__(self, eval_freq, test_set, train_set, dict_attack, test_labels, train_labels, binary, nb_class, epsilon_range, model_name, verbose=0):
         '''
         Params:
         -------
@@ -38,6 +39,7 @@ class CustomWandbCallback(EventCallback):
         self.nb_class=nb_class
         self.epsilon_range=epsilon_range
         self.binary=binary
+        self.model_name=model_name
     
     def _on_step(self) -> bool:
 
@@ -76,7 +78,7 @@ class CustomWandbCallback(EventCallback):
             
             #### FGM testing metrics ####
 
-            pytorch_model = self.get_pytorch_model()
+            pytorch_model = nn.Sequential(self.model.q_net, nn.Softmax()) if self.model_name=='DQN' else PPO_Model(self.model.policy.mlp_extractor, self.model.policy.action_net)
             classifier = PyTorchClassifier(model = pytorch_model, loss=nn.HuberLoss(), 
                                        input_shape=self.test_set.shape[1], nb_classes=self.nb_class)
 
