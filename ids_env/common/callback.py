@@ -3,12 +3,8 @@ from sklearn.metrics import f1_score
 
 from stable_baselines3.common.callbacks import EventCallback
 import wandb
-from art.attacks.evasion import FastGradientMethod
-from art.estimators.classification import PyTorchClassifier
-import torch.nn as nn
 
-from ids_env.common.utils import calcul_rates, print_stats
-from ids_env.common.utils import PPO_Model
+from ids_env.common.utils import calcul_rates
 
 
 
@@ -68,41 +64,13 @@ class CustomWandbCallback(EventCallback):
             f1 = f1_score(self.test_labels, test_actions) if self.binary else f1_score(self.test_labels, test_actions, average='weighted')
 
             wandb.log({
-                'testing_metrics_clean':{
+                'testing_metrics':{
                     "FPR":fpr,
                     "FNR":fnr,
                     "F1 score":f1
                     },
                 'epoch':self.n_calls // self.eval_freq,
                 })
-            
-            #### FGM testing metrics ####
-
-            pytorch_model = nn.Sequential(self.model.q_net, nn.Softmax()) if self.model_name=='DQN' else PPO_Model(self.model.policy.mlp_extractor, self.model.policy.action_net)
-            classifier = PyTorchClassifier(model = pytorch_model, loss=nn.HuberLoss(), 
-                                       input_shape=self.test_set.shape[1], nb_classes=self.nb_class)
-
-            for epsilon in self.epsilon_range:
-                fgm = FastGradientMethod(classifier,
-                                         norm=np.inf,
-                                         eps=epsilon,
-                                         targeted=True,
-                                         num_random_init=0,
-                                         batch_size=128,
-                                         )
-                adversarial_examples = fgm.generate(x=self.test_set, y=np.hstack((np.ones((self.test_set.shape[0], 1)), np.zeros((self.test_set.shape[0], self.nb_class-1)))).astype('float32'))
-                adversarial_actions = self.model.predict(adversarial_examples, deterministic=True)[0]
-                fpr, fnr = calcul_rates(self.test_labels, adversarial_actions)
-                f1 = f1_score(self.test_labels, adversarial_actions) if self.binary else f1_score(self.test_labels, adversarial_actions, average='weighted')
-                wandb.log({
-                    'testing_metrics_fgm':{
-                        "FPR":fpr,
-                        "FNR":fnr,
-                        "F1 score":f1
-                        },
-                    'epoch':self.n_calls // self.eval_freq,
-                    'epsilon':epsilon
-                    })
 
         return True
 

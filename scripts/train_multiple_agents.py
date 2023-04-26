@@ -7,6 +7,8 @@ import numpy as np
 from sklearn.metrics import f1_score
 import torch.nn as nn
 import wandb
+from art.estimators.classification import PyTorchClassifier
+from art.attacks.evasion import FastGradientMethod
 
 from pathlib import Path
 import sys
@@ -17,6 +19,7 @@ sys.path.append(str(path_root))
 from ids_env.common.config_workspace import config_device, config_seed
 from ids_env.common.config_ids_env import make_training_env, make_multi_proc_training_env, make_testing_env
 from ids_env.common.config_agent import Agent
+from ids_env.common.utils import calcul_rates
 
 if __name__=='__main__':
 
@@ -57,18 +60,7 @@ if __name__=='__main__':
     device = config_device(device_name)
     config_seed(seed)
 
-    ####----W&B----####
-    wandb.init(
-        project="evading_drl_ids", # do not change
-        tags = [dataset, model],
-        name=dataset + '_' + model + '_' + str(hidden_layers) + '_' + str(nb_units), # name of the run
-        job_type='train', 
-        config={"dataset": dataset, # more information about the run (useful for grouping/filtering)
-                "model": model,
-                "nb_hidden_layers":hidden_layers,
-                "nb_units":nb_units,
-                "epochs": epochs}
-    )
+
 
     ####----Evaluation Variables----####
 
@@ -101,6 +93,25 @@ if __name__=='__main__':
     adv_f1=np.zeros((nb_agents, len(epsilon_range)))
 
     for i in range(nb_agents):
+        ####----W&B----####
+        wandb.init(
+            project="evading_drl_ids", # do not change
+            tags = [dataset, model],
+            name=dataset + '_' + model + '_' + str(hidden_layers) + '_' + str(nb_units), # name of the run
+            job_type='train', 
+            config={"dataset": dataset, # more information about the run (useful for grouping/filtering)
+                    "model": model,
+                    "nb_hidden_layers":hidden_layers,
+                    "nb_units":nb_units,
+                    "epochs": epochs,
+                    "agent":i}
+        )
+
+        wandb.define_metric(
+            name='training_metrics',
+            step_metric='epoch'
+            )
+        
         print('Started training of agent {} / {}'.format(i+1, nb_agents))
 
         vectorized_training_env = make_multi_proc_training_env(nb_proc=nb_proc, dataset=dataset, binary=binary)
@@ -124,31 +135,10 @@ if __name__=='__main__':
         # Training
         print('Training...')
         agent.learn(testing_env, n_envs=nb_proc, save_dir=output_dir, num_epoch=epochs)
-        #agent.load(output_dir+'/last_model.zip')
-        '''
-        if model=='DQN':
-            agent.model.policy.set_training_mode(False) # Switch to testing mode
-
-        
-        # Evaluation on the testing set 
-
-        test_actions = agent.model.predict(test_set, deterministic=True)[0]
-        test_fpr[i], test_fnr[i] = calcul_rates(test_labels, test_actions)
-        if binary:
-            test_f1[i] = f1_score(test_labels, test_actions)
-        else:
-            test_f1[i] = f1_score(test_labels, test_actions, average='weighted')
-        
-        # Verbose 
-        #if binary : 
-        #    print_stats(['Normal', 'Attack'], test_labels, test_actions)
-        #else:
-        #    print_stats(testing_env.attack_types, test_labels, test_actions)
-        #print('FPR: ' + str(test_fpr[i]) + ', FNR: ' + str(test_fnr[i]) + ', F1_avg: ' +str(test_f1[i]))
-
-        print('Completed training of agent {} / {}'.format(i+1, nb_agents))
+        print('Training done')
 
         ####----Adversarial Attack----####
+        print("FGSM Attack...")
         pytorch_model = agent.get_pytorch_model()
         classifier = PyTorchClassifier(model = pytorch_model, loss=nn.HuberLoss(), 
                                        input_shape=test_set.shape[1], nb_classes=nb_class)
@@ -163,13 +153,19 @@ if __name__=='__main__':
                                          )
             adversarial_examples = fgm.generate(x=test_set, y=np.hstack((np.ones((test_set.shape[0], 1)), np.zeros((test_set.shape[0], nb_class-1)))).astype('float32'))# we assume the normal class is the first column
             adversarial_actions = agent.model.predict(adversarial_examples, deterministic=True)[0]
-            adv_fpr[i][epsilon], adv_fnr[i][epsilon] = calcul_rates(test_labels, adversarial_actions)
+            fpr, fnr = calcul_rates(test_labels, adversarial_actions)
             if binary:
-                adv_f1[i][epsilon] = f1_score(test_labels, adversarial_actions)
+                f1 = f1_score(test_labels, adversarial_actions)
             else:
-                adv_f1[i][epsilon] = f1_score(test_labels, adversarial_actions, average='weighted')
+                f1 = f1_score(test_labels, adversarial_actions, average='weighted')
             
-            # TODO : add other attacks / Save metrics in numpy arrray
+            wandb.log({'FGSM_metric':{
+                    "FPR":fpr,
+                    "FNR":fnr,
+                    "F1 score":f1
+                    },        
+                    "epsilon":epsilon            
+                    })
             
             # Verbose 
             #print('Adversarial Attack:')
@@ -177,9 +173,10 @@ if __name__=='__main__':
             #    print_stats(['Normal', 'Attack'], test_labels, adversarial_actions)
             #else:
             #    print_stats(testing_env.attack_types, test_labels, adversarial_actions)
-        '''
+        
 
-        print('Training Done !')
+        print('Attack done.')
+        wandb.finish()
     # Saving model and evaluation metrics
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
