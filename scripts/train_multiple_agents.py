@@ -7,6 +7,7 @@ import numpy as np
 from sklearn.metrics import f1_score
 import torch.nn as nn
 import wandb
+
 from art.estimators.classification import PyTorchClassifier
 from art.attacks.evasion import FastGradientMethod, BasicIterativeMethod
 
@@ -76,16 +77,22 @@ if __name__=='__main__':
         test_labels = np.sign(test_labels)
         train_labels = np.sign(train_labels)
         nb_class=2
+    
+    del training_env
 
 
     ####---Loop----####
+    if binary:
+        name = dataset + '_' + model + '_' + str(hidden_layers) + '_' + str(nb_units) + 'bin'
+    else: 
+        name = dataset + '_' + model + '_' + str(hidden_layers) + '_' + str(nb_units) + 'bin'
 
     for i in range(nb_agents):
         ####----W&B----####
         wandb.init(
             project="evading_drl_ids", # do not change
             tags = [dataset, model],
-            name=dataset + '_' + model + '_' + str(hidden_layers) + '_' + str(nb_units), # name of the run
+            name=name, # name of the run
             job_type='train', 
             config={"dataset": dataset, # more information about the run (useful for grouping/filtering)
                     "model": model,
@@ -159,7 +166,7 @@ if __name__=='__main__':
             print("BIM Attack...")
             bim = BasicIterativeMethod(classifier, 
                                            eps=epsilon, 
-                                           eps_step=epsilon/100.,
+                                           eps_step=0.0005,
                                            max_iter=100, 
                                            targeted=True, 
                                            batch_size=128)
@@ -185,7 +192,8 @@ if __name__=='__main__':
             #    print_stats(['Normal', 'Attack'], test_labels, adversarial_actions)
             #else:
             #    print_stats(testing_env.attack_types, test_labels, adversarial_actions)
-        
+        del agent
+        del vectorized_training_env
 
         print('Attack done.')
         wandb.finish()
