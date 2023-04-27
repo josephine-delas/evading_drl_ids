@@ -8,7 +8,7 @@ from sklearn.metrics import f1_score
 import torch.nn as nn
 import wandb
 from art.estimators.classification import PyTorchClassifier
-from art.attacks.evasion import FastGradientMethod
+from art.attacks.evasion import FastGradientMethod, BasicIterativeMethod
 
 from pathlib import Path
 import sys
