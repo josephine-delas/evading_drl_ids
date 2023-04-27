@@ -45,7 +45,7 @@ if __name__=='__main__':
     nb_agents = args.nb_agents
     binary = args.binary
     verbose = False
-    epsilon_range=[0.005, 0.01, 0.02, 0.05, 0.07, 0.1]
+    epsilon_range=[0., 0.005, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1]
 
     # Workspace config parameters
     device_name = 'cpu' 
@@ -138,12 +138,14 @@ if __name__=='__main__':
         print('Training done')
 
         ####----Adversarial Attack----####
-        print("FGSM Attack...")
+
         pytorch_model = agent.get_pytorch_model()
         classifier = PyTorchClassifier(model = pytorch_model, loss=nn.HuberLoss(), 
                                        input_shape=test_set.shape[1], nb_classes=nb_class)
 
         for epsilon in epsilon_range:
+
+            print("FGSM Attack...")
             fgm = FastGradientMethod(classifier,
                                          norm=np.inf,
                                          eps=epsilon,
@@ -167,6 +169,29 @@ if __name__=='__main__':
                     "epsilon":epsilon            
                     })
             
+            print("BIM Attack...")
+            bim = BasicIterativeMethod(classifier, 
+                                           eps=epsilon, 
+                                           eps_step=epsilon/100.
+                                           max_iter=100, 
+                                           targeted=True, 
+                                           batch_size=128)
+            
+            adversarial_examples = bim.generate(x=test_set, y=np.hstack((np.ones((test_set.shape[0], 1)), np.zeros((test_set.shape[0], nb_class-1)))).astype('float32'))# we assume the normal class is the first column
+            adversarial_actions = agent.model.predict(adversarial_examples, deterministic=True)[0]
+            fpr, fnr = calcul_rates(test_labels, adversarial_actions)
+            if binary:
+                f1 = f1_score(test_labels, adversarial_actions)
+            else:
+                f1 = f1_score(test_labels, adversarial_actions, average='weighted')
+
+            wandb.log({'BIM_metric':{
+                            "FPR":fpr,
+                            "FNR":fnr,
+                            "F1 score":f1
+                            },        
+                        "epsilon":epsilon            
+                        })   o
             # Verbose 
             #print('Adversarial Attack:')
             #if binary : 
