@@ -60,8 +60,6 @@ if __name__=='__main__':
     device = config_device(device_name)
     config_seed(seed)
 
-
-
     ####----Evaluation Variables----####
 
     testing_env = make_testing_env(dataset, binary=binary)() 
@@ -82,16 +80,6 @@ if __name__=='__main__':
 
     ####---Loop----####
 
-    best_fpr=1
-    best_fnr=1
-    best_f1_score=0
-    test_fpr=np.zeros(nb_agents)
-    test_fnr=np.zeros(nb_agents)
-    test_f1=np.zeros(nb_agents)
-    adv_fpr=np.zeros((nb_agents, len(epsilon_range)))
-    adv_fnr=np.zeros((nb_agents, len(epsilon_range)))
-    adv_f1=np.zeros((nb_agents, len(epsilon_range)))
-
     for i in range(nb_agents):
         ####----W&B----####
         wandb.init(
@@ -104,7 +92,8 @@ if __name__=='__main__':
                     "nb_hidden_layers":hidden_layers,
                     "nb_units":nb_units,
                     "epochs": epochs,
-                    "agent":i}
+                    "agent":i,
+                    "binary":binary}
         )
 
         wandb.define_metric(
@@ -124,8 +113,6 @@ if __name__=='__main__':
             'dict_attack':dict_attack,
             'test_labels':test_labels,
             'train_labels':train_labels,
-            'nb_class':nb_class,
-            'epsilon_range':epsilon_range,
             'binary':binary
         }
 
@@ -172,7 +159,7 @@ if __name__=='__main__':
             print("BIM Attack...")
             bim = BasicIterativeMethod(classifier, 
                                            eps=epsilon, 
-                                           eps_step=epsilon/100.
+                                           eps_step=epsilon/100.,
                                            max_iter=100, 
                                            targeted=True, 
                                            batch_size=128)
@@ -191,7 +178,7 @@ if __name__=='__main__':
                             "F1 score":f1
                             },        
                         "epsilon":epsilon            
-                        })   o
+                        })  
             # Verbose 
             #print('Adversarial Attack:')
             #if binary : 

@@ -12,7 +12,7 @@ class CustomWandbCallback(EventCallback):
     '''
     Custom callback to log training data in wandb and save best model.
     '''
-    def __init__(self, eval_freq, test_set, train_set, dict_attack, test_labels, train_labels, binary, nb_class, epsilon_range, model_name, verbose=0):
+    def __init__(self, eval_freq, test_set, train_set, dict_attack, test_labels, train_labels, binary, verbose=0):
         '''
         Params:
         -------
@@ -32,10 +32,7 @@ class CustomWandbCallback(EventCallback):
         self.dict_attack=dict_attack
         self.test_labels=test_labels
         self.train_labels=train_labels
-        self.nb_class=nb_class
-        self.epsilon_range=epsilon_range
         self.binary=binary
-        self.model_name=model_name
     
     def _on_step(self) -> bool:
 
