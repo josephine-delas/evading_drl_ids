@@ -83,9 +83,9 @@ if __name__=='__main__':
 
     ####---Loop----####
     if binary:
-        name = dataset + '_' + model + '_' + str(hidden_layers) + '_' + str(nb_units) + 'bin'
+        name = dataset + '_' + model + '_' + str(hidden_layers) + '_' + str(nb_units) + '_' + 'bin'
     else: 
-        name = dataset + '_' + model + '_' + str(hidden_layers) + '_' + str(nb_units) + 'bin'
+        name = dataset + '_' + model + '_' + str(hidden_layers) + '_' + str(nb_units) + '_' + 'multi'
 
     for i in range(nb_agents):
         ####----W&B----####
