@@ -201,7 +201,7 @@ if __name__=='__main__':
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     
-    agent.save(output_dir + '/last_model.zip')
+    #agent.save(output_dir + '/last_model.zip')
     #test_fpr.tofile(output_dir+'/test_fpr.np')
     #test_fnr.tofile(output_dir+'/test_fnr.np')
     #test_f1.tofile(output_dir+'/test_f1_avg.np')
