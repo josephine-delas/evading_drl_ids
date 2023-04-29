@@ -87,6 +87,8 @@ if __name__=='__main__':
     else: 
         name = dataset + '_' + model + '_' + str(hidden_layers) + '_' + str(nb_units) + '_' + 'multi'
 
+    vectorized_training_env = make_multi_proc_training_env(nb_proc=nb_proc, dataset=dataset, binary=binary)
+
     for i in range(nb_agents):
         ####----W&B----####
         wandb.init(
@@ -109,8 +111,6 @@ if __name__=='__main__':
             )
         
         print('Started training of agent {} / {}'.format(i+1, nb_agents))
-
-        vectorized_training_env = make_multi_proc_training_env(nb_proc=nb_proc, dataset=dataset, binary=binary)
 
        # Creation of the agent
 
