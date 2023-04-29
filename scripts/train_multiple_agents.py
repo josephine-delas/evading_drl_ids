@@ -193,7 +193,7 @@ if __name__=='__main__':
             #else:
             #    print_stats(testing_env.attack_types, test_labels, adversarial_actions)
         del agent
-        del vectorized_training_env
+        #del vectorized_training_env
 
         print('Attack done.')
         wandb.finish()
